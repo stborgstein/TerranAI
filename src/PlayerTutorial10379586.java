@@ -7,6 +7,8 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 	private Game game;
 
 	private Player self;
+	
+	public int scvs = 0;
 
 	public void run() {
 		mirror.getModule().setEventListener(this);
@@ -63,10 +65,9 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 				Unit closestGas = null;
 				for (Unit neutralGas : game.neutral().getUnits()) {
 					if (neutralGas.getType().isResourceContainer() && !neutralGas.getType().isMineralField()) {
-						if(self.minerals() >= 100)
+						if(self.minerals() >= 100 && self.supplyUsed() == 12)
 						{
 							myUnit.build(UnitType.Terran_Refinery, neutralGas.getTilePosition());
-							System.out.println(neutralGas.getTilePosition().toString());
 						}
 
 						if (closestGas == null || myUnit.getDistance(neutralGas) < myUnit.getDistance(closestGas)) {
@@ -100,16 +101,21 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 					myUnit.gather(closestMineral, false);
 				}
 			}
+				
 			
-			
-			//ejemplo de regla 'si la unidad encontrada es un centro de mando y tengo mas de 50 minerales, crear un trabajador'
-			if (self.minerals() >= 50 && self.supplyUsed() - self.supplyTotal() <= 2) {
+					//ejemplo de regla 'si la unidad encontrada es un centro de mando y tengo mas de 50 minerales, crear un trabajador'
+			if (self.minerals() >= 50 && self.supplyUsed() < 30 && self.supplyUsed() != self.supplyTotal()) {
 				unitTrain(UnitType.Terran_SCV, UnitType.Terran_Command_Center);
+				}
+				
+			if(self.minerals() >= 50 && 20 <= self.supplyUsed() && self.supplyUsed() <= 100 && self.supplyUsed() != self.supplyTotal()) {
+				unitTrain(UnitType.Terran_Marine, UnitType.Terran_Barracks);
 			}
-
+			
+			
 			
 			/*
-			if(self.supplyUsed() - self.supplyTotal() < 8)
+			if(self.supplyUsed - selfsupplyTotal() <= 4)
 			{
 				if(myUnit.getType().isWorker() && myUnit.isGatheringMinerals())
 				{
@@ -120,7 +126,7 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 				}		
 			}*/
 			//building new buildings
-			if(myUnit.getType() == UnitType.Terran_Command_Center) {
+			/*if(myUnit.getType() == UnitType.Terran_Command_Center) {
 				
 				myUnit.getX();
 				myUnit.getY();
@@ -129,7 +135,7 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 					if (myUnit2.getType().isMineralField()) {
 						//initial_minimal_distance = 0;
 						for (int i = 0; i <8; i++) {
-							int minimal_distance = 100000;
+							//int minimal_distance = 100000;
 							if(myUnit2.getDistance(myUnit) > myUnit2.getDistance(myUnit.getX() + 1, myUnit.getY())) {
 								//minimal_distance = 
 							}
@@ -147,12 +153,13 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 						
 					}
 				}
-			}
+			}*/
 		}
 	}
 
 	
 	public void unitTrain(UnitType unit, UnitType building) {
+		
 		
 		if(unit == UnitType.Terran_Marine && building == UnitType.Terran_Barracks)
 		{
@@ -163,10 +170,15 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 		}
 		if(unit == UnitType.Terran_SCV && building == UnitType.Terran_Command_Center)
 		{
-			for (Unit myUnit : self.getUnits())
-				if (myUnit.getType()==UnitType.Terran_Command_Center)
+			for (Unit myUnit : self.getUnits()) {
+				if (myUnit.getType()==UnitType.Terran_Command_Center) {
 					myUnit.train(unit);
+					scvs = scvs + 1;
+					System.out.println(scvs);
+				}
+					
 
+			}
 		}
 	}
 	
