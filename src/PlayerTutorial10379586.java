@@ -7,8 +7,8 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 	private Game game;
 
 	private Player self;
-	
-	public int scvs = 0;
+
+	public boolean refinery = false;
 
 	public void run() {
 		mirror.getModule().setEventListener(this);
@@ -57,17 +57,17 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 			units.append(myUnit.getType()).append(" ").append(myUnit.getTilePosition()).append("\n");
 			boolean refinery = false;
 			
-			if(myUnit.getType().isRefinery())
-				refinery = true;
 			
-			
+						//Should get a worker to make a refinery at the vespine geysir HOWEVER it doesn't
 			if (myUnit.getType().isWorker() && myUnit.isGatheringMinerals() && !refinery) {
 				Unit closestGas = null;
 				for (Unit neutralGas : game.neutral().getUnits()) {
 					if (neutralGas.getType().isResourceContainer() && !neutralGas.getType().isMineralField()) {
 						if(self.minerals() >= 100 && self.supplyUsed() == 12)
 						{
-							myUnit.build(UnitType.Terran_Refinery, neutralGas.getTilePosition());
+							buildingTrain(myUnit, UnitType.Terran_Refinery, neutralGas.getTilePosition());
+							if(!myUnit.canBuild(UnitType.Terran_Refinery, neutralGas.getTilePosition()))
+								System.out.println("Can't Refinery Build there");
 						}
 
 						if (closestGas == null || myUnit.getDistance(neutralGas) < myUnit.getDistance(closestGas)) {
@@ -81,7 +81,7 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 			}
 			
 			
-			
+						//Gets every idle worker to get back to working on mining minerals
 			if (myUnit.getType().isWorker() && myUnit.isIdle()) {
 				Unit closestMineral = null;
 
@@ -103,29 +103,59 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 			}
 				
 			
-					//ejemplo de regla 'si la unidad encontrada es un centro de mando y tengo mas de 50 minerales, crear un trabajador'
+						//Continues training SCV's until 20 is created
 			if (self.minerals() >= 50 && self.supplyUsed() < 30 && self.supplyUsed() != self.supplyTotal()) {
-				unitTrain(UnitType.Terran_SCV, UnitType.Terran_Command_Center);
+				for(int i = 0; i <= 20; i++) {
+					unitTrain(UnitType.Terran_SCV, UnitType.Terran_Command_Center);
 				}
-				
+
+			}
+		
+			
+						//Continues training marines from Barracks while supply between 20 and 100
 			if(self.minerals() >= 50 && 20 <= self.supplyUsed() && self.supplyUsed() <= 100 && self.supplyUsed() != self.supplyTotal()) {
 				unitTrain(UnitType.Terran_Marine, UnitType.Terran_Barracks);
 			}
 			
 			
+						//Should build a barracks at CommandCenter x + 12 and y +10 TilePosition HOWEVER it doesn't
+			if(self.minerals() >= 100 && self.supplyUsed() == 20){
+				if(myUnit.getType().isWorker() && myUnit.isGatheringMinerals()) {
+					for(Unit commandCenter : self.getUnits()) {
+						if(commandCenter.getType() == UnitType.Terran_Command_Center) {
+							TilePosition building = new TilePosition(commandCenter.getX() + 12, commandCenter.getY() + 10);
+							
+							if(myUnit.canBuild(UnitType.Terran_Barracks, myUnit.getTilePosition())){
+								buildingTrain(myUnit, UnitType.Terran_Barracks, building);
+								if(!myUnit.canBuild(UnitType.Terran_Barracks, commandCenter.getTilePosition()))
+									System.out.println("Can't Barracks Build there");
+							}
+						}
+					}
+				}
+			}
 			
-			/*
-			if(self.supplyUsed - selfsupplyTotal() <= 4)
-			{
-				if(myUnit.getType().isWorker() && myUnit.isGatheringMinerals())
-				{
-					if(myUnit.canBuild(UnitType.Terran_Supply_Depot, myUnit.getTilePosition()))
-					{
-						myUnit.build(UnitType.Terran_Supply_Depot);
-					}		
-				}		
-			}*/
-			//building new buildings
+
+						//Should build a Supply Depot at CommandCenter x + 8 and y + 6 TilePosition HOWEVER it doesn't
+			if(self.supplyUsed() == self.supplyTotal() && self.minerals() >= 100){
+				if(myUnit.getType().isWorker() && myUnit.isGatheringMinerals()){
+					for(Unit commandCenter : self.getUnits()) {
+						if(commandCenter.getType() == UnitType.Terran_Command_Center) {
+							TilePosition building = new TilePosition(commandCenter.getX() + 8, commandCenter.getY() + 6);
+								
+							if(myUnit.canBuild(UnitType.Terran_Supply_Depot, myUnit.getTilePosition())){
+								buildingTrain(myUnit, UnitType.Terran_Supply_Depot, building);
+								if(!myUnit.canBuild(UnitType.Terran_Supply_Depot, commandCenter.getTilePosition()))
+									System.out.println("Can't Supply Depot Build there");
+							}		
+						}		
+					}
+				}
+			}
+			
+			
+						//Locating in which direction the minerals are compared to the Command Center
+						// and from there initiates building in the opposite side
 			/*if(myUnit.getType() == UnitType.Terran_Command_Center) {
 				
 				myUnit.getX();
@@ -158,6 +188,8 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 	}
 
 	
+	/*Takes two different UnitType parameters and sends them into a general function
+	 and selects a spesific building and creates a certain unit from said building */
 	public void unitTrain(UnitType unit, UnitType building) {
 		
 		
@@ -173,23 +205,25 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 			for (Unit myUnit : self.getUnits()) {
 				if (myUnit.getType()==UnitType.Terran_Command_Center) {
 					myUnit.train(unit);
-					scvs = scvs + 1;
-					System.out.println(scvs);
 				}
-					
-
 			}
 		}
 	}
 	
-	public void buildingTrain(Unit builder, UnitType building, TilePosition position) {
-		
+	
+	/*Takes three parameters, Unit builder, UnitType building, TilePosition position. From these
+	 * three parameters it gets a unit which is to build a building (UnitType) on a set
+	  location (TilePosition)																	*/
+	public void buildingTrain(Unit builder, UnitType building, TilePosition position) {		
+		builder.build(building, position);		
 	}
+	
 	
 	public void onUnitComplete(Unit arg0) {
 		Unit u = arg0;     
 		System.out.println("\\UNIDAD COMPLETADA: "+u.getType());
 	}
+	
 	
 	public static void main(String[] args) {
 		new PlayerTutorial10379586().run();
