@@ -66,8 +66,7 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 			}
 
 			// Continues training marines from Barracks while supply between 20 and 100
-			if (self.minerals() >= 50 && 20 <= self.supplyUsed() && self.supplyUsed() <= 100
-					&& self.supplyUsed() != self.supplyTotal()) {
+			if (self.minerals() >= 50 ) {
 				unitTrain(UnitType.Terran_Marine, UnitType.Terran_Barracks);
 			}
 
