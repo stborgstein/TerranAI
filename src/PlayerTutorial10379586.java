@@ -70,7 +70,7 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 		}
 		
 		//creates a barrack 
-		else if (!BusyWorkersMinerals.isEmpty() && self.minerals() >= 50 && !barrack){
+		else if (IdleWorkers.isEmpty() && self.minerals() >= 50 && !barrack){
 			buildBarrack();
 			barrack = true;
 		} 
