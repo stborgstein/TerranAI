@@ -1,3 +1,5 @@
+/*I think it never builds the barrack because its always trying to create SCVs
+ * Either that or its not managing the lists properly*/
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +14,7 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 	private Player self;
 
 	public boolean refinery = false;
+	public boolean barrack = false;
 
 	List<Unit> IdleWorkers = new ArrayList<Unit>();
 	List<Unit> BusyWorkersMinerals = new ArrayList<Unit>();
@@ -56,40 +59,35 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 
 		// game.setTextSize(10); Podemos modificar parametros de la interfaz del juego
 		game.drawTextScreen(10, 10, "Jugando como " + self.getName() + " - " + self.getRace());
-		while (!IdleWorkers.isEmpty()) {
+		if (!IdleWorkers.isEmpty()) {
 			// Get the first idle worker
 			Unit myUnit = IdleWorkers.remove(0);
 			if (self.minerals() >= 100)
 				buildRefinery(myUnit);
-			else {
+			else if (self.minerals() < 100){
 				gatherMinerals(myUnit);
 			}
-
-			// Continues training marines from Barracks while supply between 20 and 100
-			if (self.minerals() >= 50 ) {
-				unitTrain(UnitType.Terran_Marine, UnitType.Terran_Barracks);
-			}
-
-			if (self.minerals() >= 100) {
-
-				TilePosition building = findLocationToBuild();
-				if (myUnit.canBuild(UnitType.Terran_Barracks, building)) {
-					buildingTrain(myUnit, UnitType.Terran_Barracks, building);
-					System.out.println("Barracks built");
-					if (!myUnit.canBuild(UnitType.Terran_Barracks, building))
-						System.out.println("Can't Build Barracks there");
+		}
+		
+		//creates a barrack 
+		else if (!BusyWorkersMinerals.isEmpty() && self.minerals() >= 50 && !barrack){
+			buildBarrack();
+			barrack = true;
+		} 
+		
+		// Continues training SCV's until 20 is created, then trains marines if there is a barrack
+		else if (barrack) {
+			unitTrain(UnitType.Terran_Marine, UnitType.Terran_Barracks);
+			
+			if (IdleWorkers.size() + BusyWorkersMinerals.size() + BusyWorkersGas.size() <= 10) {
+				for (int i = 0; i <= 20; i++) {
+					unitTrain(UnitType.Terran_SCV, UnitType.Terran_Command_Center);
 				}
 			}
 		}
-
-		// Continues training SCV's until 20 is created
-		if (self.minerals() >= 50 && IdleWorkers.isEmpty()) {
-			for (int i = 0; i <= 20; i++) {
-				unitTrain(UnitType.Terran_SCV, UnitType.Terran_Command_Center);
-			}
-		}
-
-		if (self.supplyUsed() == self.supplyTotal() && self.minerals() >= 100) {
+		
+		
+		else if (self.supplyUsed() == self.supplyTotal() && self.minerals() >= 100) {
 			if (IdleWorkers.isEmpty()) {
 				Unit myUnit2 = BusyWorkersMinerals.remove(0);
 				buildSupplyDepot(myUnit2);
@@ -98,6 +96,8 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 				buildSupplyDepot(myUnit2);
 			}
 		}
+
+
 	}
 
 	public void buildSupplyDepot(Unit myUnit) {
@@ -109,6 +109,18 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 				System.out.println("Can't Build Supply Depot there");
 		}
 
+	}
+
+	public void buildBarrack() {
+		Unit myUnit = BusyWorkersMinerals.remove(0);
+		
+		TilePosition building = findLocationToBuild();
+		if (myUnit.canBuild(UnitType.Terran_Barracks, building)) {
+			buildingTrain(myUnit, UnitType.Terran_Barracks, building);
+			System.out.println("Barracks built");
+		} else {
+			System.out.println("Can't Build Barracks there");
+		}
 	}
 
 	public void buildRefinery(Unit myUnit) {
