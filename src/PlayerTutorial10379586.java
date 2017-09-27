@@ -1,5 +1,5 @@
-/*I think it never builds the barrack because its always trying to create SCVs
- * Either that or its not managing the lists properly*/
+/* Sara Yuste Fernandez Alonso, NIA 100330038
+ * Stefan Borgstein, NIA 100379586*/
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,10 +16,10 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 	public boolean refinery = false;
 	public boolean barrack = false;
 
-	List<Unit> IdleWorkers = new ArrayList<Unit>();
-	List<Unit> BusyWorkersMinerals = new ArrayList<Unit>();
-	List<Unit> BusyWorkersGas = new ArrayList<Unit>();
-	List<Unit> BusyWorkersSupply = new ArrayList<Unit>();
+	public List<Unit> IdleWorkers = new ArrayList<Unit>();
+	public List<Unit> BusyWorkersMineralsOrGas = new ArrayList<Unit>();
+	//List<Unit> BusyWorkersGas = new ArrayList<Unit>();
+	public List<Unit> BusyWorkersSupply = new ArrayList<Unit>();
 
 	public void run() {
 		mirror.getModule().setEventListener(this);
@@ -43,60 +43,46 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 
 		System.out.println("Map data ready");
 
-		// int i = 0;
-		// for(BaseLocation baseLocation : BWTA.getBaseLocations()){
-		// System.out.println("Base location #" + (++i) + ". Printing location's region
-		// polygon:");
-		// for(Position position : baseLocation.getRegion().getPolygon().getPoints()){
-		// System.out.print(position + ", ");
-		// }
-		// System.out.println();
-		// }
-
 	}
 
 	public void onFrame() {
 
 		// game.setTextSize(10); Podemos modificar parametros de la interfaz del juego
 		game.drawTextScreen(10, 10, "Jugando como " + self.getName() + " - " + self.getRace());
+		// Get all the workers to either gather minerals or gas
 		if (!IdleWorkers.isEmpty()) {
 			// Get the first idle worker
 			Unit myUnit = IdleWorkers.remove(0);
 			if (self.minerals() >= 100)
 				buildRefinery(myUnit);
-			else if (self.minerals() < 100){
+			else if (self.minerals() < 100) {
 				gatherMinerals(myUnit);
 			}
 		}
-		
-		//creates a barrack 
-		else if (IdleWorkers.isEmpty() && self.minerals() >= 50 && !barrack){
+
+		// Train SCVs if the total number of workers is less than 10
+		if (IdleWorkers.size() + BusyWorkersMineralsOrGas.size() <= 10) {
+			unitTrain(UnitType.Terran_SCV, UnitType.Terran_Command_Center);
+		} else if(BusyWorkersMineralsOrGas.size() == 10 && self.minerals() >= 150) {
 			buildBarrack();
 			barrack = true;
-		} 
-		
-		// Continues training SCV's until 20 is created, then trains marines if there is a barrack
-		else if (barrack) {
-			unitTrain(UnitType.Terran_Marine, UnitType.Terran_Barracks);
-			
-			if (IdleWorkers.size() + BusyWorkersMinerals.size() + BusyWorkersGas.size() <= 10) {
-				for (int i = 0; i <= 20; i++) {
-					unitTrain(UnitType.Terran_SCV, UnitType.Terran_Command_Center);
-				}
-			}
 		}
-		
-		
+
+		// Trains marines if there is a barrack
+		if (barrack) {
+			unitTrain(UnitType.Terran_Marine, UnitType.Terran_Barracks);
+
+		}
+
 		else if (self.supplyUsed() == self.supplyTotal() && self.minerals() >= 100) {
 			if (IdleWorkers.isEmpty()) {
-				Unit myUnit2 = BusyWorkersMinerals.remove(0);
+				Unit myUnit2 = BusyWorkersMineralsOrGas.remove(0);
 				buildSupplyDepot(myUnit2);
 			} else {
 				Unit myUnit2 = IdleWorkers.remove(0);
 				buildSupplyDepot(myUnit2);
 			}
 		}
-
 
 	}
 
@@ -112,14 +98,15 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 	}
 
 	public void buildBarrack() {
-		Unit myUnit = BusyWorkersMinerals.remove(0);
-		
+		Unit myUnit = BusyWorkersMineralsOrGas.remove(0);
+
 		TilePosition building = findLocationToBuild();
-		if (myUnit.canBuild(UnitType.Terran_Barracks, building)) {
+		if (!myUnit.canBuild(UnitType.Terran_Barracks, building)) {
+			System.out.println("Can't Build Barracks there");
+		} else {
 			buildingTrain(myUnit, UnitType.Terran_Barracks, building);
 			System.out.println("Barracks built");
-		} else {
-			System.out.println("Can't Build Barracks there");
+
 		}
 	}
 
@@ -128,10 +115,10 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 		for (Unit neutralGas : game.neutral().getUnits()) {
 			if (neutralGas.getType().isResourceContainer() && !neutralGas.getType().isMineralField()) {
 
-				buildingTrain(myUnit, UnitType.Terran_Refinery, neutralGas.getTilePosition());
 				if (!myUnit.canBuild(UnitType.Terran_Refinery, neutralGas.getTilePosition()))
 					System.out.println("Can't Build Refinery there");
 				else {
+					buildingTrain(myUnit, UnitType.Terran_Refinery, neutralGas.getTilePosition());
 					refinery = true;
 				}
 
@@ -143,7 +130,7 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 		if (closestGas != null) {
 			myUnit.gather(closestGas, false);
 		}
-		BusyWorkersGas.add(myUnit);
+		BusyWorkersMineralsOrGas.add(myUnit);
 	}
 
 	public void gatherMinerals(Unit myUnit) {
@@ -161,7 +148,7 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 		// Send the worker to mine the field
 		if (closestMineral != null) {
 			myUnit.gather(closestMineral, false);
-			BusyWorkersMinerals.add(myUnit);
+			BusyWorkersMineralsOrGas.add(myUnit);
 		}
 	}
 
@@ -185,36 +172,36 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 						int mineral_y = myUnit2.getY();
 						if (mineral_x < command_center_x && mineral_y == command_center_y) {
 							// located to the east
-							base_x = command_center_x + 4;
+							base_x = command_center_x + 2;
 							base_y = command_center_y;
 						} else if (mineral_x > command_center_x && mineral_y == command_center_y) {
 							// located to the west
-							base_x = command_center_x - 4;
+							base_x = command_center_x - 2;
 							base_y = command_center_y;
 						} else if (mineral_x == command_center_x && mineral_y < command_center_y) {
 							// located to the north
 							base_x = command_center_x;
-							base_y = command_center_y + 4;
+							base_y = command_center_y + 2;
 						} else if (mineral_x == command_center_x && mineral_y > command_center_y) {
 							// located to the south
 							base_x = command_center_x;
-							base_y = command_center_y - 4;
+							base_y = command_center_y - 2;
 						} else if (mineral_x < command_center_x && mineral_y < command_center_y) {
 							// located to the north east
 							base_x = command_center_x;
-							base_y = command_center_y + 4;
+							base_y = command_center_y + 2;
 						} else if (mineral_x > command_center_x && mineral_y < command_center_y) {
 							// located to the north west
 							base_x = command_center_x;
-							base_y = command_center_y + 4;
+							base_y = command_center_y + 2;
 						} else if (mineral_x > command_center_x && mineral_y > command_center_y) {
 							// located to the south west
 							base_x = command_center_x;
-							base_y = command_center_y - 4;
+							base_y = command_center_y - 2;
 						} else if (mineral_x < command_center_x && mineral_y > command_center_y) {
 							// located to the south east
 							base_x = command_center_x;
-							base_y = command_center_y - 4;
+							base_y = command_center_y - 2;
 						}
 					}
 				}
