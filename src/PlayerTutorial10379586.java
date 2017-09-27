@@ -18,9 +18,12 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 
 	public List<Unit> IdleWorkers = new ArrayList<Unit>();
 	public List<Unit> BusyWorkersMineralsOrGas = new ArrayList<Unit>();
+	public List<Unit> BusyWorkersMineralsOrGas2 = new ArrayList<Unit>();
 	//List<Unit> BusyWorkersGas = new ArrayList<Unit>();
 	public List<Unit> BusyWorkersSupply = new ArrayList<Unit>();
 	public List<Unit> Marines = new ArrayList<Unit>();
+	
+	public int i = 0;
 	
 	public void run() {
 		mirror.getModule().setEventListener(this);
@@ -54,9 +57,10 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 		if (!IdleWorkers.isEmpty()) {
 			// Get the first idle worker
 			Unit myUnit = IdleWorkers.remove(0);
-			if (self.minerals() >= 100 && !refinery && BusyWorkersMineralsOrGas.size() <= 14)
+			if (game.canMake(UnitType.Terran_Refinery, myUnit) && !refinery && BusyWorkersMineralsOrGas.size() == 14)
 				buildRefinery(myUnit);
-			else if (self.minerals() < 100 || IdleWorkers.size() > 0) {
+			else {
+				System.out.println("Idle: " +IdleWorkers.size());
 				gatherMinerals(myUnit);
 			}
 		}
@@ -64,8 +68,11 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 		// Train SCVs if the total number of workers is less than 10
 		if (self.supplyUsed() <= 22) {
 			unitTrain(UnitType.Terran_SCV, UnitType.Terran_Command_Center);
-		} else if(BusyWorkersMineralsOrGas.size() >= 12 && self.minerals() >= 200) {
-			buildBarrack();
+
+		} else if(BusyWorkersMineralsOrGas2.size() >= 12 && game.canMake(UnitType.Terran_Barracks) && BusyWorkersSupply.size() < 1) {
+			Unit myUnit = BusyWorkersMineralsOrGas.remove(0);
+			
+			buildBarrack(myUnit);
 			barrack = true;
 		}
 
@@ -75,7 +82,7 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 
 		}
 		
-		if (self.supplyUsed() == self.supplyTotal() && self.minerals() >= 150 && BusyWorkersSupply.size() < 1) {
+		if (self.supplyUsed() == self.supplyTotal() && game.canMake(UnitType.Terran_Supply_Depot) && BusyWorkersSupply.size() < 1) {
 			if (IdleWorkers.isEmpty()) {
 				Unit myUnit2 = BusyWorkersMineralsOrGas.remove(0);
 				buildSupplyDepot(myUnit2);
@@ -84,7 +91,7 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 				buildSupplyDepot(myUnit2);
 			}
 		}
-
+		
 	}
 
 	public void buildSupplyDepot(Unit myUnit) {
@@ -93,11 +100,12 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 		int depo_x = building.getX() / 32;
 		int depo_y = building.getY() / 32;
 		TilePosition depoLocal = new TilePosition (depo_x, depo_y);
-	    buildingTrain(myUnit, UnitType.Terran_Supply_Depot, depoLocal);    
+	    buildingTrain(myUnit, UnitType.Terran_Supply_Depot, depoLocal);   
+	    
+	    
 	}
 
-	public void buildBarrack() {
-		Unit myUnit = BusyWorkersMineralsOrGas.remove(0);
+	public void buildBarrack(Unit myUnit) {
 
 		TilePosition building = findLocationToBuild();
 		int barr_x = (building.getX() / 32) - 4;
@@ -138,7 +146,8 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 	public void gatherMinerals(Unit myUnit) {
 		// Gets workers back to working on mining minerals
 		Unit closestMineral = null;
-
+		
+		
 		// Find the closest Mineral Field to mine
 		for (Unit neutralUnit : game.neutral().getUnits()) {
 			if (neutralUnit.getType().isMineralField()) {
@@ -150,7 +159,16 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 		// Send the worker to mine the field
 		if (closestMineral != null) {
 			myUnit.gather(closestMineral, false);
-			BusyWorkersMineralsOrGas.add(myUnit);
+			
+			if(BusyWorkersMineralsOrGas.size() == 12) {
+			System.out.println("Working(3): " +BusyWorkersMineralsOrGas2.size());
+			BusyWorkersMineralsOrGas2.add(myUnit);
+			System.out.println("Working(4): " +BusyWorkersMineralsOrGas2.size());
+			}else {
+				System.out.println("Working(1): " +BusyWorkersMineralsOrGas.size());
+				BusyWorkersMineralsOrGas.add(myUnit);
+				System.out.println("Working(2): " +BusyWorkersMineralsOrGas.size());
+			}
 		}
 	}
 
@@ -252,19 +270,19 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 				// the unit is self
 				if (u.getType().isWorker())
 					IdleWorkers.add(u);
-				System.out.println("\\UNIDAD COMPLETADA: " + u.getType());
+				System.out.println("\nUNIDAD COMPLETADA: " + u.getType());
 			}
 			
 			if(u.getID() == myUnit.getID()) {
 				if(u.getType() == UnitType.Terran_Supply_Depot) {
-					System.out.println("\\UNIDAD COMPLETADA: " +u.getType());
+					System.out.println("\nUNIDAD COMPLETADA: " +u.getType());
 					Unit unitBuilder = BusyWorkersSupply.remove(0);
 					IdleWorkers.add(unitBuilder);
 				}
 			}
 			if(u.getID() == myUnit.getID()) {
 				if(u.getType() == UnitType.Terran_Barracks) {
-					System.out.println("\\UNIDAD COMPLETADA: " +u.getType());
+					System.out.println("\nUNIDAD COMPLETADA: " +u.getType());
 					Unit unitBuilder = BusyWorkersSupply.remove(0);
 					IdleWorkers.add(unitBuilder);
 				}
