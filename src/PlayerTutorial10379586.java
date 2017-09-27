@@ -53,6 +53,7 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 		// Get all the workers to either gather minerals or gas
 		if (!IdleWorkers.isEmpty()) {
 			// Get the first idle worker
+			System.out.println(IdleWorkers.size());
 			Unit myUnit = IdleWorkers.remove(0);
 			if (self.minerals() >= 100 && !refinery && BusyWorkersMineralsOrGas.size() <= 14)
 				buildRefinery(myUnit);
@@ -64,6 +65,7 @@ public class PlayerTutorial10379586 extends DefaultBWListener {
 		// Train SCVs if the total number of workers is less than 10
 		if (self.supplyUsed() <= 22) {
 			unitTrain(UnitType.Terran_SCV, UnitType.Terran_Command_Center);
+			//System.out.println(BusyWorkersMineralsOrGas.size());
 		} else if(BusyWorkersMineralsOrGas.size() >= 12 && self.minerals() >= 200) {
 			buildBarrack();
 			barrack = true;
