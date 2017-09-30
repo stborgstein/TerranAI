@@ -23,6 +23,8 @@ public class PlayerTutorial12379586 extends DefaultBWListener {
 	public List<Unit> BusyWorkersSupply = new ArrayList<Unit>();
 	public List<Unit> Marines = new ArrayList<Unit>();
 	
+	public int[][] map;
+	
 	public int i = 0;
 	
 	public void run() {
@@ -47,6 +49,8 @@ public class PlayerTutorial12379586 extends DefaultBWListener {
 
 		System.out.println("Map data ready");
 
+		generateMapMatrix();
+		
 	}
 
 	public void onFrame() {
@@ -257,6 +261,24 @@ public class PlayerTutorial12379586 extends DefaultBWListener {
 		builder.build(building, position);
 	}
 
+	public void generateMapMatrix() {
+		for(int i = 0; i < game.mapWidth();)
+		{
+			
+			int tileX = i;
+			int tileY = 0;
+			
+			int a = game.getGroundHeight(tileX, tileY);
+			
+			map[tileX][tileY] = a;
+			if(i == game.mapWidth())
+			{
+				tileY++;
+				i = 0;
+			}
+		}
+	}
+	
 	public void onUnitComplete(Unit arg0) {
 		Unit u = arg0;
 		
