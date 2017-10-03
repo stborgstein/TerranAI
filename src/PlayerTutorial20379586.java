@@ -24,7 +24,7 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 	public List<Unit> BusyWorkersSupply = new ArrayList<Unit>();
 	public List<Unit> Marines = new ArrayList<Unit>();
 
-	public String[][] mapMatrix = new String[game.mapHeight()][game.mapWidth()];
+	public String[][] mapMatrix;
 
 	public int i = 0;
 
@@ -264,6 +264,8 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 
 	public void generateMapMatrix() {
 		
+		mapMatrix = new String[game.mapHeight()][game.mapWidth()];
+		
 		for (int i = 0; i < game.mapHeight(); i++) {
 			int tileX = i;
 			for (int j = 0; j < game.mapWidth(); j++) {
@@ -275,7 +277,7 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 
 					// Check if it's a Vespene Geyser or Mineral Field if not puts a 0
 					for (Unit neutralUnit : game.neutral().getUnits()) {
-						if (neutralUnit.getX() / 4 == i && neutralUnit.getY() / 4 == tileY) {
+						if (neutralUnit.getX() == tileX && neutralUnit.getY() == tileY) {
 							if (neutralUnit.getType().isMineralField()) {
 								mapMatrix[tileX][tileY] = "M";
 							} else
@@ -393,16 +395,20 @@ public void updateMatrixDoblePos(TilePosition startTile, TilePosition endTile) {
 		int zX = z.getX() / 32;
 		int zY = z.getY() / 32;
 		
-		int tileX = tile.getX() / 4;
-		int tileY = tile.getY() / 4;
+		int tileX = tile.getX();
+		int tileY = tile.getY();
 		
 		for(int i = 0; i <= zY; i++) {
 			for(int j = 0; j <= zX; j++) {
+				System.out.println("coordinates: " + tileX + " : " + tileY);
+				System.out.println(mapMatrix[tileX][tileY]);
 				mapMatrix[tileX][tileY] = "0";
+				System.out.println(mapMatrix[tileX][tileY]);
 				tileX++;
 			}
 			tileY++;
-		}	
+		}
+
 	}
 
 	public void onUnitComplete(Unit arg0) {
@@ -416,11 +422,19 @@ public void updateMatrixDoblePos(TilePosition startTile, TilePosition endTile) {
 				System.out.println("UNIDAD COMPLETADA: " + u.getType());
 			}
 
+			if(u.getID() == myUnit.getID()) {
+				if(u.getType() == UnitType.Terran_Command_Center) {
+					System.out.println("UNIDAD COMPLETADA: " + u.getType());
+					updateMatrix(u.getType(), u.getTilePosition());
+				}
+			}
 			if (u.getID() == myUnit.getID()) {
 				if (u.getType() == UnitType.Terran_Supply_Depot) {
 					System.out.println("UNIDAD COMPLETADA: " + u.getType());
 					Unit unitBuilder = BusyWorkersSupply.remove(0);
-					IdleWorkers.add(unitBuilder);
+					gatherMinerals(unitBuilder);
+					updateMatrix(u.getType(), u.getTilePosition());
+					
 				}
 			}
 			if (u.getID() == myUnit.getID()) {
@@ -428,6 +442,8 @@ public void updateMatrixDoblePos(TilePosition startTile, TilePosition endTile) {
 					System.out.println("UNIDAD COMPLETADA: " + u.getType());
 					Unit unitBuilder = BusyWorkersSupply.remove(0);
 					IdleWorkers.add(unitBuilder);
+					updateMatrix(u.getType(), u.getTilePosition());
+					
 				}
 			}
 
