@@ -267,54 +267,64 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 		mapMatrix = new String[game.mapHeight()][game.mapWidth()];
 		
 		for (int i = 0; i < game.mapHeight(); i++) {
-			int tileX = i;
+			int tileY = i;
 			for (int j = 0; j < game.mapWidth(); j++) {
-				int tileY = j;
+				int tileX = j;
 				TilePosition checkTile = new TilePosition(tileX, tileY);
-				// Check if the position is not buildable, including already existing buildings
-				// in that position
+				// Check if the position is not buildable, including already existing buildings in that position
 				if (!game.isBuildable(checkTile, true)) {
-
-					// Check if it's a Vespene Geyser or Mineral Field if not puts a 0
+					mapMatrix[tileX][tileY] = "0";
+				
+				} else {				
+					// Check if it's a Vespene Geyser or Mineral Field
 					for (Unit neutralUnit : game.neutral().getUnits()) {
-						if (neutralUnit.getX() == tileX && neutralUnit.getY() == tileY) {
+						if (neutralUnit.getX() / 32 == tileX && neutralUnit.getY() / 32 == tileY) {
 							if (neutralUnit.getType().isMineralField()) {
 								mapMatrix[tileX][tileY] = "M";
-							} else
+							} else {
 								mapMatrix[tileX][tileY] = "V";
+							}
 						
-						} else
-							mapMatrix[tileX][tileY] = "0";
+						} else {
+							// If the position is buildable, check how many tiles available to build for that position
+							int right = tileX + 1;
+							int down = tileY + 1;
+							int maximum = 1;
+							TilePosition explore = new TilePosition(right, down);
+
+							while (game.isBuildable(explore, true) && !(mapMatrix[explore.getX()][explore.getY()] == "M") 
+									&& !(mapMatrix[explore.getX()][explore.getY()] == "V")) {
+								
+								if(right < game.mapWidth()) {
+									right++;
+								} else
+									break;
+								
+								if(down < game.mapHeight()) {
+									down++;
+								} else
+									break;
+								
+								explore = new TilePosition(right, down);
+
+								
+								maximum++;								
+								
+								if (maximum == 4)
+									break;
+							} 
+							mapMatrix[tileX][tileY] = Integer.toString(maximum);
+						}
 					}
-				}else {
-				
-					// If the position is buildable, check how many tiles available to build from
-					// that position
-					int right = tileX + 1;
-					int down = tileY + 1;
-					int maximum = 1;
-					TilePosition explore = new TilePosition(right, down);
-					while (game.isBuildable(explore, true)) {
-						right++;
-						down++;
-						explore = new TilePosition(right, down);
-						maximum++;
-						if (maximum == 4)
-							break;
-					}
-					mapMatrix[tileX][tileY] = Integer.toString(maximum);
+
 				}
 
-				/*
-				 * if (i == game.mapWidth()) { tileY++; System.out.println("TileY: " + tileY); i
-				 * = 0; }
-				 */
 			}
 		}
 
 		for (int i = 0; i < game.mapHeight();) {
 			for (int j = 0; j < game.mapWidth(); j++) {
-				System.out.print(mapMatrix[i][j] + " - ");
+				System.out.print(mapMatrix[j][i] + " - ");
 				
 				if(j == game.mapWidth() - 1) {
 					System.out.println(' ');
@@ -333,12 +343,12 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 		
 		for(Unit myUnit : self.getUnits()) {
 			if(myUnit.getType() == UnitType.Terran_Command_Center) {		
-				x = myUnit.getX() / 4;
-				y = myUnit.getY() / 4;
+				x = myUnit.getX();
+				y = myUnit.getY();
 				
 				TilePosition z = building.tileSize();
 				
-				String zX = "" + z.getX() / 32;
+				String zX = "" + z.getX();
 				
 				while(mapMatrix[x][y] != zX) {
 					for(int a = 0; a <= max; a++) {
@@ -366,14 +376,14 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 		TilePosition Tile = new TilePosition(x, y);
 		return Tile;
 	}
-	//Updating matrix using double Tileposition
+	//Updating matrix using double TilePosition
 public void updateMatrixDoblePos(TilePosition startTile, TilePosition endTile) {
 		
-		int sTileX = startTile.getX() / 4;
-		int sTileY = startTile.getY() / 4;
+		int sTileX = startTile.getX();
+		int sTileY = startTile.getY();
 		
-		int eTileX = endTile.getX() / 4;
-		int eTileY = endTile.getY() / 4;
+		int eTileX = endTile.getX();
+		int eTileY = endTile.getY();
 		
 		int zX = sTileX - eTileX;
 		int zY = sTileY - eTileY;
@@ -392,18 +402,15 @@ public void updateMatrixDoblePos(TilePosition startTile, TilePosition endTile) {
 		
 		TilePosition z = building.tileSize();
 		
-		int zX = z.getX() / 32;
-		int zY = z.getY() / 32;
+		int zX = z.getX();
+		int zY = z.getY();
 		
 		int tileX = tile.getX();
 		int tileY = tile.getY();
 		
 		for(int i = 0; i <= zY; i++) {
 			for(int j = 0; j <= zX; j++) {
-				System.out.println("coordinates: " + tileX + " : " + tileY);
-				System.out.println(mapMatrix[tileX][tileY]);
 				mapMatrix[tileX][tileY] = "0";
-				System.out.println(mapMatrix[tileX][tileY]);
 				tileX++;
 			}
 			tileY++;
@@ -426,6 +433,7 @@ public void updateMatrixDoblePos(TilePosition startTile, TilePosition endTile) {
 				if(u.getType() == UnitType.Terran_Command_Center) {
 					System.out.println("UNIDAD COMPLETADA: " + u.getType());
 					updateMatrix(u.getType(), u.getTilePosition());
+					System.out.println(u.getTilePosition());
 				}
 			}
 			if (u.getID() == myUnit.getID()) {
