@@ -390,8 +390,8 @@ public void updateMatrixDoblePos(TilePosition startTile, TilePosition endTile) {
 		
 		TilePosition z = building.tileSize();
 		
-		zX = z.getX() / 32;
-		zY = z.getY() / 32;
+		int zX = z.getX() / 32;
+		int zY = z.getY() / 32;
 		
 		int tileX = tile.getX() / 4;
 		int tileY = tile.getY() / 4;
