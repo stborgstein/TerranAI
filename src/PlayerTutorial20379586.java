@@ -340,17 +340,21 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 				
 				while(mapMatrix[x][y] != zX) {
 					for(int a = 0; a <= max; a++) {
-						x--;
+						if(0 <= x && x <= game.mapWidth())
+							x--;
 					}
 					for(int b = 0;  b <= max; b++) {
-						y--;
+						if(0 <= y && y <= game.mapHeight())
+							y--;
 					}
 					max++;
 					for(int c = 0; c <= max; c++) {
+						if(0 <= x && x <= game.mapWidth())
 						x++;
 					}
 					for(int d = 0; d <= max; d++) {
-						y++;
+						if(0 <= y && y <= game.mapHeight())
+							y++;
 					}
 					max++;
 				}								
@@ -374,10 +378,10 @@ public void updateMatrixDoblePos(TilePosition startTile, TilePosition endTile) {
 		
 		for(int i = 0; i <= zY; i++) {
 			for(int j = 0; j <= zX; j++) {
-				mapMatrix[tileX][tileY] = "0";
-				tileX++;
+				mapMatrix[sTileX][sTileY] = "0";
+				sTileX++;
 			}
-			tileY++;
+			sTileY++;
 		}	
 	}
 	
