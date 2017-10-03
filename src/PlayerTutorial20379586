@@ -1,7 +1,11 @@
 
+
 /* Sara Yuste Fernandez Alonso, NIA 100330038
  * Stefan Borgstein, NIA 100379586*/
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +28,7 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 	public List<Unit> BusyWorkersSupply = new ArrayList<Unit>();
 	public List<Unit> Marines = new ArrayList<Unit>();
 
-	public int[][] map;
+	public String[][] mapMatrix;
 
 	public int i = 0;
 
@@ -51,6 +55,11 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 		System.out.println("Map data ready");
 
 		generateMapMatrix();
+		try {
+			writeMatrixToFile();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -263,67 +272,180 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 	}
 
 	public void generateMapMatrix() {
-		System.out.println("1");
 
-		String[][] mapMatrix = new String[game.mapHeight()][game.mapWidth()];
-		
+		mapMatrix = new String[game.mapHeight()][game.mapWidth()];
+
 		for (int i = 0; i < game.mapHeight(); i++) {
-			int tileX = i;
+			int tileY = i;
 			for (int j = 0; j < game.mapWidth(); j++) {
-				int tileY = j;
-				System.out.println("i: " + i);
-				System.out.println("j: " + j);
+				int tileX = j;
 				TilePosition checkTile = new TilePosition(tileX, tileY);
 				// Check if the position is not buildable, including already existing buildings
 				// in that position
 				if (!game.isBuildable(checkTile, true)) {
 					mapMatrix[tileX][tileY] = "0";
-					System.out.println("not buildable: " + i);
+
 				} else {
 					// Check if it's a Vespene Geyser or Mineral Field
 					for (Unit neutralUnit : game.neutral().getUnits()) {
-						if (neutralUnit.getX() == i && neutralUnit.getY() == tileY) {
+						if (neutralUnit.getX() / 32 == tileX && neutralUnit.getY() / 32 == tileY) {
 							if (neutralUnit.getType().isMineralField()) {
-								System.out.println("M: " + i);
 								mapMatrix[tileX][tileY] = "M";
 							} else {
-								System.out.println("V: " + i);
 								mapMatrix[tileX][tileY] = "V";
 							}
+
+						} else {
+							// If the position is buildable, check how many tiles available to build for
+							// that position
+							int right = tileX + 1;
+							int down = tileY + 1;
+							int maximum = 1;
+							TilePosition explore = new TilePosition(right, down);
+
+							while (game.isBuildable(explore, true)
+									&& !(mapMatrix[explore.getX()][explore.getY()] == "M")
+									&& !(mapMatrix[explore.getX()][explore.getY()] == "V")) {
+
+								if (right < game.mapWidth()) {
+									right++;
+								} else
+									break;
+
+								if (down < game.mapHeight()) {
+									down++;
+								} else
+									break;
+
+								explore = new TilePosition(right, down);
+
+								maximum++;
+
+								if (maximum == 4)
+									break;
+							}
+							mapMatrix[tileX][tileY] = Integer.toString(maximum);
 						}
 					}
-					// If the position is buildable, check how many tiles available to build from
-					// that position
-					int right = tileX;
-					int down = tileY;
-					int maximum = 1;
-					TilePosition explore = new TilePosition(right, down);
-					while (game.isBuildable(explore, true)) {
-						right++;
-						down++;
-						explore = new TilePosition(right, down);
-						maximum++;
-						if (maximum == 4)
-							break;
-					}
-					System.out.println("maximum: " + maximum);
 
-					mapMatrix[tileX][tileY] = Integer.toString(maximum);
 				}
-
-				/*
-				 * if (i == game.mapWidth()) { tileY++; System.out.println("TileY: " + tileY); i
-				 * = 0; }
-				 */
 			}
 		}
+	}
+
+	public void writeMatrixToFile() throws IOException {
+		String file = "C:\\map.txt";
+
+		FileWriter fw = new FileWriter(file);
+		BufferedWriter bw = new BufferedWriter(fw);
 
 		for (int i = 0; i < game.mapHeight();) {
-			for (int j = 0; j < game.mapWidth();) {
-				System.out.println(mapMatrix[i][j]);
+			for (int j = 0; j < game.mapWidth(); j++) {
+				String content = mapMatrix[j][i] + " - ";
+				bw.write(content);
+				/*
+				 * if(j == game.mapWidth() - 1) { System.out.println(' '); i++; j = 0; }
+				 */
 			}
-			System.out.println("\\n");
+
+			bw.write(" ");
 		}
+		bw.close();
+	}
+
+	public TilePosition matrixBuild(UnitType building) {
+
+		int x = 0, y = 0;
+		int max = 1;
+
+		for (Unit myUnit : self.getUnits()) {
+			if (myUnit.getType() == UnitType.Terran_Command_Center) {
+				x = myUnit.getX();
+				y = myUnit.getY();
+
+				TilePosition z = building.tileSize();
+
+				String zX = "" + z.getX();
+
+				while (mapMatrix[x][y] != zX) {
+					for (int a = 0; a <= max; a++) {
+						if (0 <= x && x <= game.mapWidth())
+							x--;
+					}
+					for (int b = 0; b <= max; b++) {
+						if (0 <= y && y <= game.mapHeight())
+							y--;
+					}
+					max++;
+					for (int c = 0; c <= max; c++) {
+						if (0 <= x && x <= game.mapWidth())
+							x++;
+					}
+					for (int d = 0; d <= max; d++) {
+						if (0 <= y && y <= game.mapHeight())
+							y++;
+					}
+					max++;
+				}
+
+			}
+		}
+		TilePosition Tile = new TilePosition(x, y);
+		return Tile;
+	}
+
+	// Updating matrix using double TilePosition
+	public void updateMatrixDoblePos(TilePosition startTile, TilePosition endTile) {
+
+		int sTileX = startTile.getX();
+		int sTileY = startTile.getY();
+
+		int eTileX = endTile.getX();
+		int eTileY = endTile.getY();
+
+		int zX = sTileX - eTileX;
+		int zY = sTileY - eTileY;
+
+		for (int i = 0; i <= zY; i++) {
+			for (int j = 0; j <= zX; j++) {
+				mapMatrix[sTileX][sTileY] = "0";
+				sTileX++;
+			}
+			sTileY++;
+		}
+		
+		try {
+			writeMatrixToFile();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	// Updating matrix using building type and its top left corner
+	public void updateMatrix(UnitType building, TilePosition tile) {
+
+		TilePosition z = building.tileSize();
+
+		int zX = z.getX();
+		int zY = z.getY();
+
+		int tileX = tile.getX();
+		int tileY = tile.getY();
+
+		for (int i = 0; i <= zY; i++) {
+			for (int j = 0; j <= zX; j++) {
+				mapMatrix[tileX][tileY] = "0";
+				tileX++;
+			}
+			tileY++;
+		}
+		
+		try {
+			writeMatrixToFile();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	public void onUnitComplete(Unit arg0) {
@@ -338,10 +460,19 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 			}
 
 			if (u.getID() == myUnit.getID()) {
+				if (u.getType() == UnitType.Terran_Command_Center) {
+					System.out.println("UNIDAD COMPLETADA: " + u.getType());
+					updateMatrix(u.getType(), u.getTilePosition());
+					System.out.println(u.getTilePosition());
+				}
+			}
+			if (u.getID() == myUnit.getID()) {
 				if (u.getType() == UnitType.Terran_Supply_Depot) {
 					System.out.println("UNIDAD COMPLETADA: " + u.getType());
 					Unit unitBuilder = BusyWorkersSupply.remove(0);
-					IdleWorkers.add(unitBuilder);
+					gatherMinerals(unitBuilder);
+					updateMatrix(u.getType(), u.getTilePosition());
+
 				}
 			}
 			if (u.getID() == myUnit.getID()) {
@@ -349,6 +480,8 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 					System.out.println("UNIDAD COMPLETADA: " + u.getType());
 					Unit unitBuilder = BusyWorkersSupply.remove(0);
 					IdleWorkers.add(unitBuilder);
+					updateMatrix(u.getType(), u.getTilePosition());
+
 				}
 			}
 
