@@ -4,6 +4,15 @@
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.nio.file.*;
+import java.util.*;
+
 
 import bwapi.*;
 import bwta.BWTA;
@@ -27,6 +36,8 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 	public String[][] mapMatrix;
 
 	public int i = 0;
+	
+	public static OutputStream out;
 
 	public void run() {
 		mirror.getModule().setEventListener(this);
@@ -48,10 +59,16 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 		BWTA.readMap();
 		BWTA.analyze();
 
-		System.out.println("Map data ready");
+
 
 		generateMapMatrix();
+		
+		try {
+			writeMatrixToFile();
+		} catch (IOException e) {}
 
+		System.out.println("Map data ready");
+		
 	}
 
 	public void onFrame() {
@@ -321,20 +338,7 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 
 			}
 		}
-
-		for (int i = 0; i < game.mapHeight();) {
-			for (int j = 0; j < game.mapWidth(); j++) {
-				System.out.print(mapMatrix[j][i] + " - ");
-				
-				if(j == game.mapWidth() - 1) {
-					System.out.println(' ');
-					i++;
-					j = 0;
-				}
-			}
-		}
 	}
-	
 	
 	public TilePosition matrixBuild(UnitType building) {
 
@@ -376,8 +380,34 @@ public class PlayerTutorial20379586 extends DefaultBWListener {
 		TilePosition Tile = new TilePosition(x, y);
 		return Tile;
 	}
+	
+	
+	public void writeMatrixToFile() throws IOException {
+
+	    String content = null;
+	    out = Files.newOutputStream(Paths.get("C:\\Users\\Stbor\\Desktop\\AI\\TerranAI\\src\\mapFile.txt"), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+	    for (int i = 0; i < game.mapHeight();) {
+	      for (int j = 0; j < game.mapWidth(); j++) {
+	        content = mapMatrix[j][i] + " - ";
+	        
+	        out.write(content.getBytes());
+	        
+	        if(j == game.mapWidth() - 1) {
+	        	i++;
+	        	content = "\n";
+	        	out.write(content.getBytes());
+	        }
+	      }
+	      content = " ";
+	      out.write(content.getBytes());
+
+	    }
+
+	  }
+	
+	
 	//Updating matrix using double TilePosition
-public void updateMatrixDoblePos(TilePosition startTile, TilePosition endTile) {
+	public void updateMatrixDoblePos(TilePosition startTile, TilePosition endTile) {
 		
 		int sTileX = startTile.getX();
 		int sTileY = startTile.getY();
